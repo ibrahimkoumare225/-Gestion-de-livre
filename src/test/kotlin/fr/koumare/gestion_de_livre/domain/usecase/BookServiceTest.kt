@@ -3,6 +3,7 @@ package fr.koumare.gestion_de_livre.domain.usecase
 import Book
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class BookServiceTest {
 
@@ -27,5 +28,25 @@ class BookServiceTest {
         val result = service.listBooks()
 
         assertEquals("A", result[0].title)
+    }
+
+    @Test
+    fun `list contains all inserted books`() {
+        val repo = FakeBookRepository()
+        val service = BookService(repo)
+
+        val books = listOf(
+            Book("C", "a"),
+            Book("A", "b"),
+            Book("B", "c")
+        )
+
+        books.forEach { service.addBook(it) }
+
+        val result = service.listBooks()
+
+        assertEquals(books.size, result.size)
+
+        assertTrue(result.containsAll(books))
     }
 }
