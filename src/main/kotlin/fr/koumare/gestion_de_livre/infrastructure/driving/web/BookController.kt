@@ -3,7 +3,7 @@ package fr.koumare.gestion_de_livre.infrastructure.driving.web
 import fr.koumare.gestion_de_livre.domain.model.Book
 import fr.koumare.gestion_de_livre.domain.usecase.BookUseCase
 import fr.koumare.gestion_de_livre.infrastructure.driving.web.dto.BookDTO
-import fr.koumare.gestion_de_livre.infrastructure.driving.web.dto.toDomain
+import fr.koumare.gestion_de_livre.infrastructure.driving.web.dto.BookReservationDTO
 import fr.koumare.gestion_de_livre.infrastructure.driving.web.dto.toDTO
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -28,6 +28,12 @@ class BookController(private val service: BookUseCase) {
     @GetMapping
     fun listBooks(): List<BookDTO> {
         return service.listBooks().map { it.toDTO() }
+    }
+
+    @PostMapping("/reserve")
+    fun reserveBook(@RequestBody reservationDTO: BookReservationDTO): BookDTO {
+        val reservedBook = service.reserveBook(reservationDTO.title.trim(), reservationDTO.author.trim())
+        return reservedBook.toDTO()
     }
 
     @PostMapping("/{id}/reserve")

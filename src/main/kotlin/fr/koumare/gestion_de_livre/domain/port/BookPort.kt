@@ -6,5 +6,6 @@ interface BookPort {
     fun findAll(): List<Book>
     fun save(book: Book): Book
     fun findById(id: Long): Book?
+    fun findByTitleAndAuthor(title: String, author: String): Book?
     fun reserveBook(book: Book): Book
 }

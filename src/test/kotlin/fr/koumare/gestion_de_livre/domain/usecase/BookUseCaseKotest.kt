@@ -59,14 +59,39 @@ class BookUseCaseKotest : FunSpec({
         verify(exactly = 1) { bookPort.reserveBook(reservedBook) }
     }
 
-    test("should throw BookNotFoundException when reserving unknown book") {
-        every { bookPort.findById(1) } returns null
+    test("should reserve book by title and author successfully") {
+        val book = Book(id = 1, title = "Les Misérables", author = "Victor Hugo")
+        val reservedBook = book.reserve()
+        every { bookPort.findByTitleAndAuthor("Les Misérables", "Victor Hugo") } returns book
+        every { bookPort.reserveBook(reservedBook) } returns reservedBook
+
+        val result = bookUseCase.reserveBook("Les Misérables", "Victor Hugo")
+
+        result.isReserved shouldBe true
+        result.id shouldBe 1
+        verify(exactly = 1) { bookPort.findByTitleAndAuthor("Les Misérables", "Victor Hugo") }
+        verify(exactly = 1) { bookPort.reserveBook(reservedBook) }
+    }
+
+    test("should throw BookNotFoundException when reserving unknown book by title and author") {
+        every { bookPort.findByTitleAndAuthor("Unknown", "Unknown") } returns null
 
         shouldThrow<BookNotFoundException> {
-            bookUseCase.reserveBook(1)
+            bookUseCase.reserveBook("Unknown", "Unknown")
         }
 
-        verify(exactly = 1) { bookPort.findById(1) }
+        verify(exactly = 1) { bookPort.findByTitleAndAuthor("Unknown", "Unknown") }
+    }
+
+    test("should throw BookAlreadyReservedException when reserving already reserved book by title and author") {
+        val reservedBook = Book(id = 1, title = "Les Misérables", author = "Victor Hugo", isReserved = true)
+        every { bookPort.findByTitleAndAuthor("Les Misérables", "Victor Hugo") } returns reservedBook
+
+        shouldThrow<BookAlreadyReservedException> {
+            bookUseCase.reserveBook("Les Misérables", "Victor Hugo")
+        }
+
+        verify(exactly = 1) { bookPort.findByTitleAndAuthor("Les Misérables", "Victor Hugo") }
     }
 
     test("should throw BookAlreadyReservedException when reserving already reserved book") {

@@ -19,6 +19,10 @@ class FakeBookPort : BookPort {
         return books.firstOrNull { it.id == id }
     }
 
+    override fun findByTitleAndAuthor(title: String, author: String): Book? {
+        return books.firstOrNull { it.title == title && it.author == author }
+    }
+
     override fun reserveBook(book: Book): Book {
         val index = books.indexOfFirst { it.id == book.id }
         if (index == -1) {

@@ -99,6 +99,27 @@ class BookControllerIT(
         }
     }
 
+    "POST /books/reserve should reserve a book successfully by title and author" {
+        val book = Book(id = 1, title = "Test Book", author = "Test Author", isReserved = false)
+        val reservedBook = book.reserve()
+        every { bookUseCase.reserveBook("Test Book", "Test Author") } returns reservedBook
+
+        mockMvc.post("/books/reserve") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """{"title":"Test Book","author":"Test Author"}"""
+        }.andExpect {
+            status { isOk() }
+            content { contentType(MediaType.APPLICATION_JSON) }
+            content {
+                json(
+                    """
+                    {"id":1,"title":"Test Book","author":"Test Author","isAvailable":false}
+                    """.trimIndent()
+                )
+            }
+        }
+    }
+
     "POST /books/{id}/reserve should return 409 when book cannot be reserved" {
         val bookId = 1L
         every { bookUseCase.reserveBook(bookId) } throws BookAlreadyReservedException(bookId)
