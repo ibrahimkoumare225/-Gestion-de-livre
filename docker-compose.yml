@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: gestion-de-livre-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-gestion_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gestion_password}
+      POSTGRES_DB: ${POSTGRES_DB:-gestion_de_livre}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-gestion_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gestion-network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: gestion-de-livre-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - gestion-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gestion-de-livre-app
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/gestion_de_livre
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-gestion_user}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-gestion_password}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_LIQUIBASE_ENABLED: "true"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - gestion-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  gestion-network:
+    driver: bridge

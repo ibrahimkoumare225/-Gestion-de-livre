@@ -1,0 +1,119 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: gestion_de_livre
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up JDK 21
+      uses: actions/setup-java@v3
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: gradle
+    
+    - name: Make gradlew executable
+      run: chmod +x ./gradlew
+    
+    - name: Build with Gradle
+      run: ./gradlew build
+    
+    - name: Run unit tests
+      run: ./gradlew test
+    
+    - name: Run architecture tests
+      run: ./gradlew testArchitecture
+    
+    - name: Run integration tests
+      run: ./gradlew testIntegration
+    
+    - name: Generate JaCoCo report
+      run: ./gradlew jacocoTestReport
+    
+    - name: Run Pitest mutation tests
+      run: ./gradlew pitest
+    
+    - name: Upload JaCoCo coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./build/reports/jacoco/test/jacocoTestReport.xml
+        fail_ci_if_error: false
+    
+    - name: Archive test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-reports
+        path: build/reports/tests/test/
+    
+    - name: Archive JaCoCo report
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: jacoco-report
+        path: build/reports/jacoco/
+
+  code-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up JDK 21
+      uses: actions/setup-java@v3
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: gradle
+    
+    - name: Make gradlew executable
+      run: chmod +x ./gradlew
+    
+    - name: Run Detekt analysis
+      run: ./gradlew detekt || true
+    
+    - name: Archive Detekt report
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: detekt-report
+        path: build/reports/detekt/
+
+  docker-build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    
+    - name: Build Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: false
+        tags: gestion-de-livre:latest

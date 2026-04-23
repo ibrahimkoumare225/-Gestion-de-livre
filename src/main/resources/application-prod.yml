@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: Gestion de livre
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:gestion_de_livre}
+    username: ${DB_USER:gestion_user}
+    password: ${DB_PASSWORD:gestion_password}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  liquibase:
+    change-log: classpath:db/changelog.xml
+    enabled: true
+
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO
+    fr.koumare.gestion_de_livre: DEBUG
