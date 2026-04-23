@@ -12,7 +12,7 @@ class BookUseCaseTest {
         val repo = FakeBookPort()
         val useCase = BookUseCase(repo)
 
-        val book = Book("Test Book", "Test Author")
+        val book = Book(1L, "Test Book", "Test Author", false)
         useCase.addBook(book)
 
         assertEquals(1, repo.findAll().size)
@@ -25,7 +25,7 @@ class BookUseCaseTest {
         val useCase = BookUseCase(repo)
 
         assertFailsWith<IllegalArgumentException> {
-            useCase.addBook(Book("", "Author"))
+            useCase.addBook(Book(1L, "", "Author", false))
         }
     }
 
@@ -35,7 +35,7 @@ class BookUseCaseTest {
         val useCase = BookUseCase(repo)
 
         assertFailsWith<IllegalArgumentException> {
-            useCase.addBook(Book("Title", ""))
+            useCase.addBook(Book(1L, "Title", "", false))
         }
     }
 
@@ -44,8 +44,8 @@ class BookUseCaseTest {
         val repo = FakeBookPort()
         val useCase = BookUseCase(repo)
 
-        val book1 = Book("B Book", "Author B")
-        val book2 = Book("A Book", "Author A")
+        val book1 = Book(1L, "B Book", "Author B", false)
+        val book2 = Book(2L, "A Book", "Author A", false)
         useCase.addBook(book1)
         useCase.addBook(book2)
 
@@ -71,15 +71,15 @@ class BookUseCaseTest {
         val repo = FakeBookPort()
         val useCase = BookUseCase(repo)
 
-        val book = Book("Test Book", "Test Author")
+        val book = Book(1L, "Test Book", "Test Author", false)
         useCase.addBook(book)
 
-        val reservedBook = useCase.reserveBook("Test Book", "Test Author")
+        val reservedBook = useCase.reserveBook(1L)
 
-        assertEquals("Test Book", reservedBook?.title)
-        assertEquals("Test Author", reservedBook?.author)
-        assertEquals(true, reservedBook?.isReserved)
-        assertEquals(false, reservedBook?.isAvailable)
+        assertEquals("Test Book", reservedBook.title)
+        assertEquals("Test Author", reservedBook.author)
+        assertEquals(true, reservedBook.isReserved)
+        assertEquals(false, reservedBook.isAvailable)
     }
 
     @Test
@@ -87,8 +87,8 @@ class BookUseCaseTest {
         val repo = FakeBookPort()
         val useCase = BookUseCase(repo)
 
-        assertFailsWith<IllegalArgumentException> {
-            useCase.reserveBook("Non-existent Book", "Unknown Author")
+        assertFailsWith<BookNotFoundException> {
+            useCase.reserveBook(999L)
         }
     }
 
@@ -97,32 +97,12 @@ class BookUseCaseTest {
         val repo = FakeBookPort()
         val useCase = BookUseCase(repo)
 
-        val book = Book("Test Book", "Test Author")
+        val book = Book(1L, "Test Book", "Test Author", false)
         useCase.addBook(book)
-        useCase.reserveBook("Test Book", "Test Author")
+        useCase.reserveBook(1L)
 
-        assertFailsWith<IllegalArgumentException> {
-            useCase.reserveBook("Test Book", "Test Author")
-        }
-    }
-
-    @Test
-    fun `should throw exception when reserving with blank title`() {
-        val repo = FakeBookPort()
-        val useCase = BookUseCase(repo)
-
-        assertFailsWith<IllegalArgumentException> {
-            useCase.reserveBook("", "Author")
-        }
-    }
-
-    @Test
-    fun `should throw exception when reserving with blank author`() {
-        val repo = FakeBookPort()
-        val useCase = BookUseCase(repo)
-
-        assertFailsWith<IllegalArgumentException> {
-            useCase.reserveBook("Title", "")
+        assertFailsWith<BookAlreadyReservedException> {
+            useCase.reserveBook(1L)
         }
     }
 }

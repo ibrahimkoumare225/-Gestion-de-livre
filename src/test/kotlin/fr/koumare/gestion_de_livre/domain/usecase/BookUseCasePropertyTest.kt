@@ -20,10 +20,10 @@ class BookUseCasePropertyTest {
         val repo = FakeBookPort()
         val useCase = BookUseCase(repo)
 
-        initialTitles.map { Book(it, author) }.forEach { useCase.addBook(it) }
+        initialTitles.mapIndexed { index, t -> Book(index.toLong() + 1, t, author, false) }.forEach { useCase.addBook(it) }
         val initialSize = repo.findAll().size
 
-        val book = Book(title, author)
+        val book = Book((initialTitles.size + 1).toLong(), title, author, false)
         useCase.addBook(book)
 
         assertEquals(initialSize + 1, repo.findAll().size)
@@ -39,7 +39,7 @@ class BookUseCasePropertyTest {
         val useCase = BookUseCase(repo)
 
         assertFailsWith<IllegalArgumentException> {
-            useCase.addBook(Book(blankTitle, author))
+            useCase.addBook(Book(1L, blankTitle, author, false))
         }
     }
 
@@ -52,7 +52,7 @@ class BookUseCasePropertyTest {
         val useCase = BookUseCase(repo)
 
         assertFailsWith<IllegalArgumentException> {
-            useCase.addBook(Book(title, blankAuthor))
+            useCase.addBook(Book(1L, title, blankAuthor, false))
         }
     }
 
@@ -64,7 +64,7 @@ class BookUseCasePropertyTest {
         val repo = FakeBookPort()
         val useCase = BookUseCase(repo)
 
-        val books = titles.map { Book(it, author) }
+        val books = titles.mapIndexed { index, titleValue -> Book(index.toLong() + 1, titleValue, author, false) }
         books.shuffled().forEach { useCase.addBook(it) }
 
         val result = useCase.listBooks()
@@ -82,7 +82,7 @@ class BookUseCasePropertyTest {
         val repo = FakeBookPort()
         val useCase = BookUseCase(repo)
 
-        val books = titles.map { Book(it, author) }
+        val books = titles.mapIndexed { index, titleValue -> Book(index.toLong() + 1, titleValue, author, false) }
         books.forEach { useCase.addBook(it) }
 
         val result1 = useCase.listBooks()
@@ -100,7 +100,7 @@ class BookUseCasePropertyTest {
         val repo = FakeBookPort()
         val useCase = BookUseCase(repo)
 
-        val book = Book(title, author)
+        val book = Book(1L, title, author, false)
         repeat(times) {
             useCase.addBook(book)
         }
@@ -118,15 +118,15 @@ class BookUseCasePropertyTest {
         val repo = FakeBookPort()
         val useCase = BookUseCase(repo)
 
-        val book = Book(title, author)
+        val book = Book(1L, title, author, false)
         useCase.addBook(book)
 
-        val reservedBook = useCase.reserveBook(title, author)
+        val reservedBook = useCase.reserveBook(1L)
 
-        assertEquals(title, reservedBook?.title)
-        assertEquals(author, reservedBook?.author)
-        assertTrue(reservedBook?.isReserved == true)
-        assertTrue(reservedBook?.isAvailable == false)
+        assertEquals(title, reservedBook.title)
+        assertEquals(author, reservedBook.author)
+        assertTrue(reservedBook.isReserved)
+        assertTrue(!reservedBook.isAvailable)
     }
 
     @Property
@@ -137,40 +137,33 @@ class BookUseCasePropertyTest {
         val repo = FakeBookPort()
         val useCase = BookUseCase(repo)
 
-        val book = Book(title, author)
+        val book = Book(1L, title, author, false)
         useCase.addBook(book)
-        useCase.reserveBook(title, author)
+        useCase.reserveBook(1L)
 
-        assertFailsWith<IllegalArgumentException> {
-            useCase.reserveBook(title, author)
+        assertFailsWith<BookAlreadyReservedException> {
+            useCase.reserveBook(1L)
         }
     }
 
     @Property
     fun `reserving non-existent book should fail`(
         @ForAll("validTitles") title: String,
-        @ForAll("validAuthors") author: String,
-        @ForAll("validTitles") wrongTitle: String
+        @ForAll("validAuthors") author: String
     ) {
         val repo = FakeBookPort()
         val useCase = BookUseCase(repo)
 
-        val book = Book(title, author)
+        val book = Book(1L, title, author, false)
         useCase.addBook(book)
 
-        // Ensure wrongTitle is different from title
-        val actualWrongTitle = if (wrongTitle == title) "Different $wrongTitle" else wrongTitle
-
-        assertFailsWith<IllegalArgumentException> {
-            useCase.reserveBook(actualWrongTitle, author)
+        assertFailsWith<BookNotFoundException> {
+            useCase.reserveBook(999L)
         }
     }
     @Provide
     fun validTitles(): Arbitrary<String> = Arbitraries.strings()
         .withCharRange('a', 'z')
-        .withCharRange('A', 'Z')
-        .withCharRange('0', '9')
-        .withChars(' ', '-', '_', '.', ',')
         .ofMinLength(1)
         .ofMaxLength(100)
         .filter { it.isNotBlank() }
@@ -184,8 +177,6 @@ class BookUseCasePropertyTest {
     @Provide
     fun validAuthors(): Arbitrary<String> = Arbitraries.strings()
         .withCharRange('a', 'z')
-        .withCharRange('A', 'Z')
-        .withChars(' ', '-', '_', '.', ',')
         .ofMinLength(1)
         .ofMaxLength(50)
         .filter { it.isNotBlank() }

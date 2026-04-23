@@ -27,6 +27,6 @@ class BookEntity(
     constructor() : this(null, "", "", false)
 
     fun toDomain(): Book {
-        return Book(title, author, isReserved)
+        return Book(id, title, author, isReserved)
     }
 }

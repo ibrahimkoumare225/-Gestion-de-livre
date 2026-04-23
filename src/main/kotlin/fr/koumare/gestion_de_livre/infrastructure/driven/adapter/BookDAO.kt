@@ -10,22 +10,34 @@ class BookDAO(
     private val jpaRepository: BookJpaRepository
 ) : BookPort {
 
-    override fun save(book: Book) {
-        val entity = BookEntity(title = book.title, author = book.author, isReserved = book.isReserved)
-        jpaRepository.save(entity)
+    override fun save(book: Book): Book {
+        val entity = BookEntity(
+            id = book.id,
+            title = book.title,
+            author = book.author,
+            isReserved = book.isReserved
+        )
+        val savedEntity = jpaRepository.save(entity)
+        return savedEntity.toDomain()
     }
 
     override fun findAll(): List<Book> {
         return jpaRepository.findAll().map { it.toDomain() }
     }
 
+    override fun findById(id: Long): Book? {
+        return jpaRepository.findById(id).map { it.toDomain() }.orElse(null)
+    }
+
     @Transactional
-    override fun reserveBook(title: String, author: String): Book? {
-        val rowsUpdated = jpaRepository.reserveBook(title, author)
-        return if (rowsUpdated > 0) {
-            jpaRepository.findByTitleAndAuthor(title, author)?.toDomain()
-        } else {
-            null
-        }
+    override fun reserveBook(book: Book): Book {
+        val entity = BookEntity(
+            id = book.id,
+            title = book.title,
+            author = book.author,
+            isReserved = book.isReserved
+        )
+        val savedEntity = jpaRepository.save(entity)
+        return savedEntity.toDomain()
     }
 }

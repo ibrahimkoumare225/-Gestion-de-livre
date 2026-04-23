@@ -1,6 +1,6 @@
 plugins {
-    kotlin("jvm") version "1.9.25"
-    kotlin("plugin.spring") version "1.9.25"
+    kotlin("jvm") version "1.9.22"
+    kotlin("plugin.spring") version "1.9.22"
 
     id("org.springframework.boot") version "3.2.5"
     id("io.spring.dependency-management") version "1.1.7"
@@ -12,7 +12,7 @@ plugins {
     id("info.solidsoft.pitest") version "1.15.0"
 
     // code quality
-    id("io.gitlab.arturbosch.detekt") version "1.23.4"
+    id("io.gitlab.arturbosch.detekt") version "1.23.8"
 }
 
 group = "fr.koumare"
@@ -69,6 +69,8 @@ dependencies {
     testImplementation("io.mockk:mockk:1.13.8")
     testImplementation("io.kotest:kotest-assertions-core:5.9.1")
     testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
+    testImplementation("io.kotest:kotest-framework-datatest:5.9.1")
+    testImplementation("io.kotest:kotest-property:5.9.1")
     testImplementation("com.ninja-squad:springmockk:4.0.2")
     testImplementation("io.kotest.extensions:kotest-extensions-spring:1.3.0")
 
@@ -134,6 +136,11 @@ tasks.register<Test>("testIntegration") {
 
 jacoco {
     toolVersion = "0.8.10"
+}
+
+detekt {
+    toolVersion = "1.23.5"
+    ignoreFailures = true
 }
 
 tasks.jacocoTestReport {

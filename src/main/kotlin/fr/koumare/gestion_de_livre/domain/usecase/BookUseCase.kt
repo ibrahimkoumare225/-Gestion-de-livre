@@ -3,32 +3,28 @@ package fr.koumare.gestion_de_livre.domain.usecase
 import fr.koumare.gestion_de_livre.domain.model.Book
 import fr.koumare.gestion_de_livre.domain.port.BookPort
 
+class BookNotFoundException(id: Long) : RuntimeException("Book with id $id not found")
+class BookAlreadyReservedException(id: Long) : RuntimeException("Book with id $id is already reserved")
+
 class BookUseCase(private val repo: BookPort) {
 
-    fun addBook(book: Book) {
+    fun addBook(book: Book): Book {
         if (book.title.isBlank() || book.author.isBlank()) {
             throw IllegalArgumentException("Invalid book")
         }
-        repo.save(book)
+        return repo.save(book)
     }
 
     fun listBooks(): List<Book> {
-        return repo.findAll().sortedBy { it.title }
+        return repo.findAll().sortedBy { it.title.lowercase() }
     }
 
-    fun reserveBook(title: String, author: String): Book? {
-        if (title.isBlank() || author.isBlank()) {
-            throw IllegalArgumentException("Title and author must not be blank")
-        }
-
-        // Check if book exists and is available
-        val book = repo.findAll().find { it.title == title && it.author == author }
-            ?: throw IllegalArgumentException("Book not found")
-
+    fun reserveBook(id: Long): Book {
+        val book = repo.findById(id) ?: throw BookNotFoundException(id)
         if (book.isReserved) {
-            throw IllegalArgumentException("Book is already reserved")
+            throw BookAlreadyReservedException(id)
         }
-
-        return repo.reserveBook(title, author)
+        val reservedBook = book.reserve()
+        return repo.reserveBook(reservedBook)
     }
 }

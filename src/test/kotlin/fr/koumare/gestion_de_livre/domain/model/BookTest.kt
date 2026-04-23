@@ -10,17 +10,18 @@ class BookTest {
 
     @Test
     fun `should create book with valid title and author`() {
-        val book = Book("Clean Code", "Robert C. Martin")
+        val book = Book(title = "Clean Code", author = "Robert C. Martin")
 
         assertEquals("Clean Code", book.title)
         assertEquals("Robert C. Martin", book.author)
+        assertEquals(null, book.id)
         assertFalse(book.isReserved)
         assertTrue(book.isAvailable)
     }
 
     @Test
     fun `should create reserved book`() {
-        val book = Book("Clean Code", "Robert C. Martin", isReserved = true)
+        val book = Book(title = "Clean Code", author = "Robert C. Martin", isReserved = true)
 
         assertEquals("Clean Code", book.title)
         assertEquals("Robert C. Martin", book.author)
@@ -29,16 +30,37 @@ class BookTest {
     }
 
     @Test
+    fun `should reserve available book`() {
+        val book = Book(id = 1, title = "Clean Code", author = "Robert C. Martin", isReserved = false)
+        val reservedBook = book.reserve()
+
+        assertEquals(1, reservedBook.id)
+        assertEquals("Clean Code", reservedBook.title)
+        assertEquals("Robert C. Martin", reservedBook.author)
+        assertTrue(reservedBook.isReserved)
+        assertFalse(reservedBook.isAvailable)
+    }
+
+    @Test
+    fun `should throw exception when reserving already reserved book`() {
+        val book = Book(id = 1, title = "Clean Code", author = "Robert C. Martin", isReserved = true)
+
+        assertFailsWith<IllegalArgumentException> {
+            book.reserve()
+        }
+    }
+
+    @Test
     fun `should throw exception when title is blank`() {
         assertFailsWith<IllegalArgumentException> {
-            Book("", "Author")
+            Book(1L, "", "Author", false)
         }
     }
 
     @Test
     fun `should throw exception when author is blank`() {
         assertFailsWith<IllegalArgumentException> {
-            Book("Title", "")
+            Book(1L, "Title", "", false)
         }
     }
 }
